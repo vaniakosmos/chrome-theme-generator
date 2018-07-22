@@ -15,6 +15,8 @@ def set_logo(m: dict, value: str):
 
 
 def convert_hex(value: str):
+    if value.startswith('#'):
+        value = value[1:]
     if len(value) == 6:
         value = [int(value[i:i + 2], 16) for i in range(0, 6, 2)]
     elif len(value) == 3:
@@ -65,14 +67,9 @@ def process_steps(sub_manifest, steps):
                 break
 
 
-def sum_list(a, b):
-    return [a1 + b2 for a1, b2 in zip(a, b)]
-
-
 def is_light(colors: dict):
-    frame = colors['frame']
     toolbar = colors['toolbar']
-    return sum(sum_list(frame, toolbar)) > 255 * 3
+    return sum(toolbar) > 255 * 3 / 2
 
 
 def setup_colors(colors: dict, light: bool):
@@ -123,7 +120,7 @@ def main():
     process_steps(manifest, steps)
 
     steps = [
-        ("set frame color", set_frame_color),
+        ("set frame color (hex or rgb)", set_frame_color),
         ("set bg color (default is lighter frame color)", set_bg_color),
     ]
     process_steps(colors, steps)
