@@ -60,8 +60,10 @@ def process_steps(sub_manifest: dict, config_data: dict, steps: list):
 
 
 def is_light(colors: dict):
-    toolbar = colors['toolbar']
-    return sum(toolbar) > 255 * 3 / 2
+    toolbar_color = colors['toolbar']
+    r, g, b = toolbar_color
+    luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.5
 
 
 def setup_colors(colors: dict, light: bool):
