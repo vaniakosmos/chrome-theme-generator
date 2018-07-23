@@ -1,4 +1,7 @@
+import argparse
+import configparser
 import json
+import os
 from pprint import pprint
 
 
@@ -10,7 +13,7 @@ def set_name(m: dict, name: str):
 
 def set_logo(m: dict, value: str):
     if value == 'white':
-        m['properties']['ntp_logo_alternate'] = 1
+        m['theme']['properties']['ntp_logo_alternate'] = 1
     return True
 
 
@@ -26,42 +29,60 @@ def convert_hex(value: str):
     return value
 
 
+def get_rgb(value: str):
+    tokens = len(value.split())
+    if tokens == 1:
+        value = convert_hex(value)
+    elif tokens == 3:
+        value = value.split()
+    else:
+        raise ValueError
+    rgb = list(map(int, value))
+    return rgb
+
+
 def set_frame_color(m: dict, value: str):
     try:
-        tokens = len(value.split())
-        if tokens == 1:
-            value = convert_hex(value)
-        elif tokens == 3:
-            value = value.split()
-        else:
-            raise ValueError
+        rgb = get_rgb(value)
+        m['frame'] = rgb
+        return True
     except Exception as e:
         print(e, '- hex or rgb are acceptable')
         return False
-    rgb = list(map(int, value))
-    m['frame'] = rgb
-    return True
 
 
-def set_bg_color(m: dict, value):
+def set_bg_color(m: dict, value: str):
     if not value:
         value = list(map(lambda x: min(255, int(x * 1.1 + 20)), m['frame']))
+    else:
+        try:
+            value = get_rgb(value)
+        except Exception as e:
+            print(e, '- hex or rgb are acceptable')
+            return False
     m['ntp_background'] = m['toolbar'] = value
     return True
 
 
-def save_manifest(m: dict):
-    path = input("manifest path/name >  ")
+def save_manifest(m: dict, path=None):
     if not path:
-        path = '/Users/Vania/Desktop/test-theme'
-    with open(f'{path}/manifest.json', 'w') as f:
+        path = input("manifest path/name >  ")
+        if not path:
+            path = '.'
+    if not os.path.exists(path):
+        os.makedirs(path)
+    path = os.path.join(path, 'manifest.json')
+    with open(path, 'w') as f:
         json.dump(m, f, indent=4)
 
 
 def process_steps(sub_manifest, steps):
-    for info, func in steps:
+    for info, func, value_from_config in steps:
         while True:
-            value = input(info + ' >  ')
+            if value_from_config:
+                value = value_from_config
+            else:
+                value = input(info + ' >  ')
             ok = func(sub_manifest, value)
             if ok:
                 break
@@ -94,7 +115,21 @@ def setup_tints(tints: dict, light: bool):
         tints['buttons'] = [1, 1, 1]
 
 
+def read_config(config_fp):
+    config = configparser.ConfigParser()
+    files = config.read(config_fp)
+    if not files:
+        return {}
+    return dict(config['gen'])
+
+
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config', default=None, nargs='?')
+    args = parser.parse_args()
+    config_fp = args.config or 'config.ini'
+    data = read_config(config_fp)
+
     manifest = {
         'manifest_version': 2,
         'version': '1.0',
@@ -114,14 +149,18 @@ def main():
     tints = manifest['theme']['tints']
 
     steps = [
-        ("name (default 'theme')", set_name),
-        ("google logo (default 'color', might be 'white')", set_logo),
+        ("name (default 'theme')",
+         set_name, data.get('name', None)),
+        ("google logo (default 'color', might be 'white')",
+         set_logo, data.get('logo', None)),
     ]
     process_steps(manifest, steps)
 
     steps = [
-        ("set frame color (hex or rgb)", set_frame_color),
-        ("set bg color (default is lighter frame color)", set_bg_color),
+        ("set frame color (hex or rgb)",
+         set_frame_color, data.get('frame-color', None)),
+        ("set toolbar color (default is lighter frame color)",
+         set_bg_color, data.get('toolbar-color', None)),
     ]
     process_steps(colors, steps)
 
@@ -130,7 +169,7 @@ def main():
     setup_tints(tints, light)
 
     pprint(manifest)
-    save_manifest(manifest)
+    save_manifest(manifest, path=data.get('save-path', None))
 
 
 if __name__ == '__main__':

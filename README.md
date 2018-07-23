@@ -6,7 +6,7 @@ Generate chrome theme manifest.json based on two colors:
 
 If selected toolbar color is light then tab and new tab text will be black / grey, otherwise white / light grey.
 
-## run
+## usage
 
 ```bash
 # start
@@ -14,4 +14,8 @@ python main.py
 # follow steps
 # ...
 # profit
+
+# you can also specify config with predefined values
+python main.py config.ini
+# script will look for config.ini by default
 ```
