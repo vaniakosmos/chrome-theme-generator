@@ -197,9 +197,6 @@
         }
     });
     const ws = io.connect('http://' + document.domain + ':' + location.port);
-    // ws.on('connect', function () {
-    //     app.requestUpdateColors();
-    // });
 
     ws.on('update', function (e) {
         console.log('catch updated');

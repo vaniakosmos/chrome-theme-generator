@@ -3,6 +3,10 @@ def get_hex(num):
     return h if len(h) == 2 else h * 2
 
 
+def bound_color(num):
+    return max(min(int(round(num)), 255), 0)
+
+
 class Color:
     def __init__(self, value, alpha=1.0):
         if isinstance(value, Color):
@@ -42,6 +46,10 @@ class Color:
         return self._value
 
     @property
+    def hsl(self):
+        return Color.rgb_to_hsl(self._value)
+
+    @property
     def alpha(self):
         return self._alpha
 
@@ -64,9 +72,61 @@ class Color:
     def add_alpha(self, alpha):
         return Color(self._value, alpha)
 
-    def add_light(self, m=1.1, a=20):
-        value = list(map(lambda x: max(min(255, int(x * m + a)), 0), self._value))
+    def add_light(self, m=1.1, a=0.1):
+        h, s, l = self.hsl
+        l = max(min(l * m + a, 1), 0)
+        value = Color.hsl_to_rgb((h, s, l))
         return Color(value, self._alpha)
+
+    @classmethod
+    def rgb_to_hsl(cls, rgb):
+        r, g, b = rgb
+        r /= 255
+        g /= 255
+        b /= 255
+        cmax_i, cmax = max(zip(range(3), (r, g, b)), key=lambda x: x[1])
+        cmin_i, cmin = min(zip(range(3), (r, g, b)), key=lambda x: x[1])
+        delta = cmax - cmin
+        # hue
+        if delta == 0:
+            h = 0
+        elif cmax == r:
+            h = ((g - b) / delta % 6) * 60
+        elif cmax == g:
+            h = ((b - r) / delta + 2) * 60
+        else:
+            h = ((r - g) / delta + 4) * 60
+        # luminance
+        l = (cmax + cmin) / 2
+        # saturation
+        if delta == 0:
+            s = 0
+        else:
+            s = delta / (1 - abs(2 * l - 1))
+        return h, s, l
+
+    @classmethod
+    def hsl_to_rgb(cls, hsl):
+        h, s, l = hsl
+        c = (1 - abs(2 * l - 1)) * s
+        x = c * (1 - abs((h / 60) % 2 - 1))
+        m = l - c / 2
+
+        if 0 <= h < 60:
+            r, g, b = c, x, 0
+        elif 60 <= h < 120:
+            r, g, b = x, c, 0
+        elif 120 <= h < 180:
+            r, g, b = 0, c, x
+        elif 180 <= h < 240:
+            r, g, b = 0, x, c
+        elif 240 <= h < 300:
+            r, g, b = x, 0, c
+        else:
+            r, g, b = c, 0, x
+
+        r, g, b = bound_color((r + m) * 255), bound_color((g + m) * 255), bound_color((b + m) * 255)
+        return r, g, b
 
     @classmethod
     def rgb_to_hex(cls, color: iter):
@@ -85,3 +145,16 @@ class Color:
         else:
             raise ValueError(f"bad hex color {value}")
         return value
+
+
+def main():
+    rgb = (43, 56, 89)
+    print(rgb)
+    hsl = Color.rgb_to_hsl(rgb)
+    print(hsl)
+    rgb = Color.hsl_to_rgb(hsl)
+    print(rgb)
+
+
+if __name__ == '__main__':
+    main()

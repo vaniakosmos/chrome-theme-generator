@@ -38,14 +38,16 @@ def handle_new_connection():
 @socketio.on('update')
 def handle_update(event):
     frame_color = Color(event['frameColor'])
+    frame_scale = event.get('frameScale', -0.1)
     toolbar_color = Color(event['toolbarColor'])
+    toolbar_scale = event.get('toolbarScale', 0.1)
     emit('update', {
         'frameColor': frame_color.hex,
         'toolbarColor': toolbar_color.hex,
         'frameFontColor': frame_color.alternative.hex,
         'toolbarFontColor': toolbar_color.alternative.hex,
-        'autoFrameColor': toolbar_color.add_light(0.9, -20).hex,
-        'autoToolbarColor': frame_color.add_light().hex,
+        'autoFrameColor': toolbar_color.add_light(1, frame_scale).hex,
+        'autoToolbarColor': frame_color.add_light(1, toolbar_scale).hex,
     })
 
 

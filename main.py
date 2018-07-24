@@ -77,7 +77,7 @@ def set_logo(m: Manifest, value: str):
 @meta("set frame color (hex or rgb)", 'frame-color')
 def set_frame_color(m: Manifest, value: str):
     try:
-        m.colors['frame'] = Color(value)
+        m.setup_frame(Color(value))
         return True
     except Exception as e:
         print(e, '- hex or rgb are acceptable')
@@ -87,14 +87,14 @@ def set_frame_color(m: Manifest, value: str):
 @meta("set toolbar color (default is slightly lighter version of frame color)", 'toolbar-color')
 def set_toolbar_color(m: Manifest, value: str):
     if not value:
-        color = m.colors['frame'].add_light()
+        color = m.colors['frame'].add_light(1, 0.1)
     else:
         try:
             color = Color(value)
         except Exception as e:
             print(e, '- hex or rgb are acceptable')
             return False
-    m.colors['ntp_background'] = m.colors['toolbar'] = color
+    m.setup_toolbar(color)
     return True
 
 
