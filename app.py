@@ -3,6 +3,9 @@ import os
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 
+from main import get_font_color
+from color import Color
+
 
 BASE_DIR = os.path.dirname(__file__)
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
@@ -21,17 +24,26 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
 
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
 @socketio.on('connect')
-def handle_message():
+def handle_new_connection():
     print('connected!')
     emit('hurma', {'foo': 'bar'})
+
+
+@socketio.on('update')
+def handle_update(event):
+    print('update:', event)
+    frame_color = Color(event['frameColor'])
+    toolbar_color = Color(event['toolbarColor'])
+    font_color = get_font_color(toolbar_color.rgb)
+    emit('update', {
+        'fontColor': font_color.hex,
+    })
 
 
 if __name__ == '__main__':

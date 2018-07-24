@@ -17,20 +17,22 @@
         }
 
         .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
-            color: darkred;
+            color: inherit;
         }
 
         a {
-            color: tomato;
+            color: inherit;
         }
+
         a:hover {
-            color: tomato;
+            color: inherit;
             background-color: rgba(255, 255, 255, 0.26);
         }
 
         [v-cloak] {
             display: none;
         }
+
         .browser {
             padding: 20px 0 0 0;
             border: black 3px solid;
@@ -54,10 +56,12 @@
 
 <div id="app" v-cloak style="padding: 20px 20px 20px 40px">
     <div class="row">
-        <div class="col-md-7 browser" :style="{ backgroundColor: frameColor }">
+        <div class="col-md-7 browser"
+             :style="{ backgroundColor: frameColor, color: fontColor }">
             <ul class="nav nav-tabs" id="myTab" role="tablist" :style="{borderColor: frameColor}">
                 <li v-for="tab in tabs" class="nav-item" @click="activate(tab.id)">
-                    <a class="nav-link" :class="{ active: tab.active }" :id="tab.id + '-tab'" data-toggle="tab"
+                    <a class="nav-link" :class="{ active: tab.active }" :id="tab.id + '-tab'"
+                       data-toggle="tab"
                        :href="'#' + tab.id" role="tab" :aria-controls="tab.id" aria-selected="false"
                        :style="{ backgroundColor: tab.active ? toolbarColor : frameColor }"
                     >
@@ -65,8 +69,10 @@
                     </a>
                 </li>
             </ul>
-            <div class="ntw-container tab-content" id="myTabContent" :style="{ backgroundColor: toolbarColor }">
-                <div v-for="tab in tabs" class="ntw tab-pane" :class="{active: tab.active}" :id="tab.id" role="tabpanel"
+            <div class="ntw-container tab-content" id="myTabContent"
+                 :style="{ backgroundColor: toolbarColor, color: fontColor }">
+                <div v-for="tab in tabs" class="ntw tab-pane" :class="{active: tab.active}"
+                     :id="tab.id" role="tabpanel"
                      :aria-labelledby="tab.id + '-tab'">
                     {{ tab.title }}
                 </div>
@@ -111,11 +117,6 @@
 <script type="text/javascript"
         src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
 <script type="text/javascript" charset="utf-8">
-    const socket = io.connect('http://' + document.domain + ':' + location.port);
-    socket.on('hurma', function (e) {
-        console.log('yep');
-        console.log(e);
-    });
 
     const app = new Vue({
         el: '#app',
@@ -123,6 +124,7 @@
             message: 'Google',
             frameColor: '#2e5daa',
             toolbarColor: '#4286f4',
+            fontColor: '#fff',
             tabs: [
                 {
                     id: 'google',
@@ -144,8 +146,17 @@
         methods: {
             saveManifest: function () {
                 console.log('saving...', this.frameColor, this.toolbarColor);
+                this.updateColors();
             },
-            activate : function (tabId) {
+
+            updateColors: function() {
+                ws.emit('update', {
+                    toolbarColor: this.toolbarColor,
+                    frameColor: this.frameColor,
+                })
+            },
+
+            activate: function (tabId) {
                 for (tab of this.tabs) {
                     if (tab.id === tabId) {
                         tab.active = true;
@@ -155,7 +166,20 @@
                     }
                 }
             }
+        },
+        updated: function () {
+            // console.log('produce update');
         }
+    });
+    const ws = io.connect('http://' + document.domain + ':' + location.port);
+    ws.on('connect', function () {
+        app.updateColors();
+    });
+
+    ws.on('update', function (e) {
+        console.log('catch updated');
+        console.log(e);
+        app.fontColor = e.fontColor;
     });
 </script>
 </body>
