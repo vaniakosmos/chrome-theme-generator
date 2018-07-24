@@ -1,4 +1,4 @@
-class Color(list):
+class Color:
     def __init__(self, value, alpha=1.0):
         if isinstance(value, Color):
             self._value = value._value
@@ -12,7 +12,17 @@ class Color(list):
         assert len(self._value) == 3
         assert all(map(lambda e: 0 <= e <= 255, self._value))
         assert 0 <= self._alpha <= 1
-        super().__init__((*self._value, alpha))
+
+    def __add__(self, alpha: float):
+        assert isinstance(alpha, float)
+        assert 0 <= self._alpha <= 1
+        return Color(self._value, alpha)
+
+    def __str__(self):
+        return str(self.to_json())
+
+    def __repr__(self):
+        return str(self.to_json())
 
     @property
     def hex(self):
@@ -31,6 +41,16 @@ class Color(list):
         r, g, b = self._value
         luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
         return luminance > 0.5
+
+    @property
+    def alternative(self):
+        if self.light:
+            return Color([0, 0, 0])
+        else:
+            return Color([255, 255, 255])
+
+    def to_json(self):
+        return [*self._value, self._alpha]
 
     def add_alpha(self, alpha):
         return Color(self._value, alpha)
