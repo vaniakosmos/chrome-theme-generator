@@ -39,9 +39,9 @@ def handle_update(event):
     print('update:', event)
     frame_color = Color(event['frameColor'])
     toolbar_color = Color(event['toolbarColor'])
-    font_color = toolbar_color.alternative
     emit('update', {
-        'fontColor': font_color.hex,
+        'frameFontColor': frame_color.alternative.hex,
+        'toolbarFontColor': toolbar_color.alternative.hex,
     })
 
 
