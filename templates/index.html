@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css"
+          integrity="sha384-Smlep5jCw/wG7hdkwQ/Z5nLIefveQRIY9nfy6xoR1uRYBtpZgI6339F5dgvm/e9B"
+          crossorigin="anonymous">
+    <style>
+        .nav-tabs .nav-link {
+            border: none;
+        }
+
+        .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+            background-color: aquamarine;
+        }
+
+        .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+            color: darkred;
+        }
+
+        a {
+            color: tomato;
+        }
+        a:hover {
+            color: tomato;
+            background-color: rgba(255, 255, 255, 0.26);
+        }
+
+        [v-cloak] {
+            display: none;
+        }
+        .browser {
+            padding: 20px 0 0 0;
+            border: black 3px solid;
+            height: 300px;
+        }
+
+        .ntw-container {
+            height: 235px;
+            text-align: center;
+        }
+
+        .ntw {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="app" v-cloak style="padding: 20px 20px 20px 40px">
+    <div class="row">
+        <div class="col-md-7 browser" :style="{ backgroundColor: frameColor }">
+            <ul class="nav nav-tabs" id="myTab" role="tablist" :style="{borderColor: frameColor}">
+                <li v-for="tab in tabs" class="nav-item" @click="activate(tab.id)">
+                    <a class="nav-link" :class="{ active: tab.active }" :id="tab.id + '-tab'" data-toggle="tab"
+                       :href="'#' + tab.id" role="tab" :aria-controls="tab.id" aria-selected="false"
+                       :style="{ backgroundColor: tab.active ? toolbarColor : frameColor }"
+                    >
+                        {{ tab.title }}
+                    </a>
+                </li>
+            </ul>
+            <div class="ntw-container tab-content" id="myTabContent" :style="{ backgroundColor: toolbarColor }">
+                <div v-for="tab in tabs" class="ntw tab-pane" :class="{active: tab.active}" :id="tab.id" role="tabpanel"
+                     :aria-labelledby="tab.id + '-tab'">
+                    {{ tab.title }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div>
+                <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" id="frame-check">
+                    <label class="form-check-label" for="frame-check">auto frame</label>
+                </div>
+                <div class="form-group">
+                    <label for="frame">frame</label>
+                    <input type="color" class="form-control-file" id="frame"
+                           name="color" v-model="frameColor"/>
+                </div>
+                <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" id="toolbar-check" checked>
+                    <label class="form-check-label" for="toolbar-check">auto toolbar</label>
+                </div>
+                <div class="form-group">
+                    <label for="toolbar">toolbar</label>
+                    <input type="color" class="form-control-file" id="toolbar"
+                           name="color" v-model="toolbarColor"/>
+                </div>
+                <button @click="saveManifest" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+        integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"
+        integrity="sha384-o+RDsa0aLu++PJvFqy8fFScvbHFLtbvScb8AjopnFD+iEQ7wo/CG0xlczd+2O/em"
+        crossorigin="anonymous"></script>
+<script type="text/javascript"
+        src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script type="text/javascript" charset="utf-8">
+    const socket = io.connect('http://' + document.domain + ':' + location.port);
+    socket.on('hurma', function (e) {
+        console.log('yep');
+        console.log(e);
+    });
+
+    const app = new Vue({
+        el: '#app',
+        data: {
+            message: 'Google',
+            frameColor: '#2e5daa',
+            toolbarColor: '#4286f4',
+            tabs: [
+                {
+                    id: 'google',
+                    title: 'google',
+                    active: false,
+                },
+                {
+                    id: 'foobar',
+                    title: 'foobar',
+                    active: true,
+                },
+                {
+                    id: 'new-tab',
+                    title: 'new tab',
+                    active: false,
+                },
+            ]
+        },
+        methods: {
+            saveManifest: function () {
+                console.log('saving...', this.frameColor, this.toolbarColor);
+            },
+            activate : function (tabId) {
+                for (tab of this.tabs) {
+                    if (tab.id === tabId) {
+                        tab.active = true;
+                    }
+                    else {
+                        tab.active = false;
+                    }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
