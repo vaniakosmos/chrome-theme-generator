@@ -1,3 +1,8 @@
+def get_hex(num):
+    h = hex(num)[2:]
+    return h if len(h) == 2 else h * 2
+
+
 class Color:
     def __init__(self, value, alpha=1.0):
         if isinstance(value, Color):
@@ -9,9 +14,13 @@ class Color:
         self._value = list(map(int, self._value))
         self._alpha = alpha
 
-        assert len(self._value) == 3
-        assert all(map(lambda e: 0 <= e <= 255, self._value))
-        assert 0 <= self._alpha <= 1
+        try:
+            assert len(self._value) == 3
+            assert all(map(lambda e: 0 <= e <= 255, self._value))
+            assert 0 <= self._alpha <= 1
+        except AssertionError as e:
+            print(self._value, value, alpha)
+            raise e
 
     def __add__(self, alpha: float):
         assert isinstance(alpha, float)
@@ -37,14 +46,14 @@ class Color:
         return self._alpha
 
     @property
-    def light(self):
+    def is_light(self):
         r, g, b = self._value
         luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
         return luminance > 0.5
 
     @property
     def alternative(self):
-        if self.light:
+        if self.is_light:
             return Color([0, 0, 0])
         else:
             return Color([255, 255, 255])
@@ -56,12 +65,12 @@ class Color:
         return Color(self._value, alpha)
 
     def add_light(self, m=1.1, a=20):
-        value = list(map(lambda x: min(255, int(x * m + a)), self._value))
+        value = list(map(lambda x: max(min(255, int(x * m + a)), 0), self._value))
         return Color(value, self._alpha)
 
     @classmethod
     def rgb_to_hex(cls, color: iter):
-        return '#' + ''.join(map(lambda c: hex(c)[2:], color))
+        return '#' + ''.join(map(get_hex, color))
 
     @classmethod
     def hex_to_rgb(cls, value: str):
@@ -71,6 +80,8 @@ class Color:
             value = [int(value[i:i + 2], 16) for i in range(0, 6, 2)]
         elif len(value) == 3:
             value = [int(value[i:i + 1] * 2, 16) for i in range(0, 3, 1)]
+        elif len(value) == 8:
+            return Color.hex_to_rgb(value[:-2])
         else:
-            raise ValueError
+            raise ValueError(f"bad hex color {value}")
         return value

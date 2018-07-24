@@ -82,8 +82,11 @@
         <div class="col-md-5">
             <div>
                 <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input" id="frame-check">
-                    <label class="form-check-label" for="frame-check">auto frame</label>
+                    <input type="checkbox" class="form-check-input"
+                           id="frame-check" v-model="autoFrameColor">
+                    <label class="form-check-label" for="frame-check">
+                        auto frame
+                    </label>
                 </div>
                 <div class="form-group">
                     <label for="frame">frame</label>
@@ -91,8 +94,11 @@
                            name="color" v-model="frameColor"/>
                 </div>
                 <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input" id="toolbar-check" checked>
-                    <label class="form-check-label" for="toolbar-check">auto toolbar</label>
+                    <input type="checkbox" class="form-check-input"
+                           id="toolbar-check" v-model="autoToolbarColor">
+                    <label class="form-check-label" for="toolbar-check">
+                        auto toolbar
+                    </label>
                 </div>
                 <div class="form-group">
                     <label for="toolbar">toolbar</label>
@@ -129,6 +135,8 @@
             toolbarColor: '#4286f4',
             frameFontColor: '#fff',
             toolbarFontColor: '#fff',
+            autoFrameColor: false,
+            autoToolbarColor: true,
             tabs: [
                 {
                     id: 'google',
@@ -149,11 +157,14 @@
         },
         methods: {
             saveManifest: function () {
-                console.log('saving...', this.frameColor, this.toolbarColor);
-                this.updateColors();
+                console.log('saving...');
+                ws.emit('save', {
+                    toolbarColor: this.toolbarColor,
+                    frameColor: this.frameColor,
+                })
             },
 
-            updateColors: function() {
+            requestUpdateColors: function() {
                 console.log('update color');
                 ws.emit('update', {
                     toolbarColor: this.toolbarColor,
@@ -161,35 +172,39 @@
                 })
             },
 
+            updateColors: function(data) {
+                this.frameFontColor = data.frameFontColor;
+                this.toolbarFontColor = data.toolbarFontColor;
+                if (this.autoToolbarColor) {
+                    this.toolbarColor = data.autoToolbarColor;
+                }
+                if (this.autoFrameColor) {
+                    this.frameColor = data.autoFrameColor;
+                }
+            },
+
             activate: function (tabId) {
                 for (tab of this.tabs) {
-                    if (tab.id === tabId) {
-                        tab.active = true;
-                    }
-                    else {
-                        tab.active = false;
-                    }
+                    tab.active = tab.id === tabId;
                 }
             }
         },
         updated: function () {
-            console.log('produce update');
             clearTimeout(delayTimer);
             delayTimer = setTimeout(function() {
-                app.updateColors();
+                app.requestUpdateColors();
             }, 100);
         }
     });
     const ws = io.connect('http://' + document.domain + ':' + location.port);
-    ws.on('connect', function () {
-        app.updateColors();
-    });
+    // ws.on('connect', function () {
+    //     app.requestUpdateColors();
+    // });
 
     ws.on('update', function (e) {
         console.log('catch updated');
         console.log(e);
-        app.frameFontColor = e.frameFontColor;
-        app.toolbarFontColor = e.toolbarFontColor;
+        app.updateColors(e);
     });
 </script>
 </body>

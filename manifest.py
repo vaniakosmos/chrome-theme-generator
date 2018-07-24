@@ -19,7 +19,17 @@ class Manifest:
         self.tints = {}  # type: Dict[str, List[float]]
         self.properties = {}  # type: Dict[str, Any]
 
+        self._ready = False
+
+    def setup(self, frame: Color, toolbar: Color):
+        self.colors['frame'] = frame
+        self.colors['toolbar'] = self.colors['ntp_background'] = toolbar
+        self.setup_colors()
+        self.setup_tints()
+
     def setup_colors(self):
+        self.check()
+
         colors = self.colors
         fcol = colors['frame'].alternative
         tcol = colors['toolbar'].alternative
@@ -36,9 +46,19 @@ class Manifest:
         colors['ntp_section_text'] = tcol + 0.6
 
     def setup_tints(self):
+        self.check()
+
         toolbar_color = self.colors['toolbar']
-        if not toolbar_color.light:
+        if not toolbar_color.is_light:
             self.tints['buttons'] = [1, 1, 1]
+
+    @property
+    def ready(self):
+        return self.colors['frame'] and self.colors['toolbar']
+
+    def check(self):
+        if not self.ready:
+            raise Exception('manifest is not ready')
 
     @classmethod
     def from_file(cls, fp: str):
@@ -57,6 +77,7 @@ class Manifest:
         data = self.to_dict()
         with open(fp, 'w') as f:
             json.dump(data, f, indent=indent, default=json_default)
+        print('saved to', fp)
 
     def to_dict(self):
         return {

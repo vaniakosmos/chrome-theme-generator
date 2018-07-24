@@ -1,9 +1,11 @@
+import logging
 import os
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 
 from color import Color
+from manifest import Manifest
 
 
 BASE_DIR = os.path.dirname(__file__)
@@ -31,19 +33,35 @@ def index():
 @socketio.on('connect')
 def handle_new_connection():
     print('connected!')
-    emit('hurma', {'foo': 'bar'})
 
 
 @socketio.on('update')
 def handle_update(event):
-    print('update:', event)
     frame_color = Color(event['frameColor'])
     toolbar_color = Color(event['toolbarColor'])
     emit('update', {
+        'frameColor': frame_color.hex,
+        'toolbarColor': toolbar_color.hex,
         'frameFontColor': frame_color.alternative.hex,
         'toolbarFontColor': toolbar_color.alternative.hex,
+        'autoFrameColor': toolbar_color.add_light(0.9, -20).hex,
+        'autoToolbarColor': frame_color.add_light().hex,
     })
 
 
+@socketio.on('save')
+def save_manifest(event):
+    frame_color = Color(event['frameColor'])
+    toolbar_color = Color(event['toolbarColor'])
+    fp = event.get('path', './manifest.json')
+    try:
+        m = Manifest()
+        m.setup(frame_color, toolbar_color)
+        m.save(fp)
+    except Exception as e:
+        emit('error', str(e))
+
+
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
+    logging.basicConfig(level=30)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=False)
