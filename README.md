@@ -8,14 +8,18 @@ If selected toolbar color is light then tab and new tab text will be black / gre
 
 ## usage
 
+### cli
 ```bash
-# start
+# start Q&A-like theme generator and follow step
 python main.py
-# follow steps
-# ...
-# profit
-
 # you can also specify config with predefined values
 python main.py config.ini
-# script will look for config.ini by default
 ```
+
+### web
+```bash
+# start interactive session, go to localhost:8000 and check it out
+python app.py
+```
+
+![screenshot](statics/screeshot.png)
