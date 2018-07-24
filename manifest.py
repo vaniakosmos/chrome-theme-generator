@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, Dict, List
 
 from color import Color
@@ -91,11 +92,14 @@ class Manifest:
         m.properties = data['theme']['properties']
         return m
 
-    def save(self, fp, indent=4):
+    def save(self, fp: str, indent=4):
         data = self.to_dict()
+        if not fp.endswith('.json'):
+            fp = os.path.join(fp, 'manifest.json')
         with open(fp, 'w') as f:
             json.dump(data, f, indent=indent, default=json_default)
         print('saved to', fp)
+        return fp
 
     def to_dict(self):
         return {

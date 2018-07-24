@@ -13,10 +13,6 @@
         }
 
         .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
-            background-color: aquamarine;
-        }
-
-        .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
             color: inherit;
         }
 
@@ -34,13 +30,13 @@
         }
 
         .browser {
-            padding: 20px 0 0 0;
+            padding: 40px 0 0 0;
             border: black 3px solid;
-            height: 300px;
+            height: 500px;
         }
 
         .ntw-container {
-            height: 235px;
+            height: 413px;
             text-align: center;
         }
 
@@ -50,6 +46,22 @@
             font-weight: bold;
         }
 
+        .slider {
+            width: 100%;
+        }
+
+        .message {
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        .info {
+            background-color: rgba(173, 255, 47, 0.5);
+        }
+
+        .error {
+            background-color: rgba(255, 99, 71, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -81,32 +93,59 @@
         </div>
         <div class="col-md-5">
             <div>
-                <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input"
-                           id="frame-check" v-model="autoFrameColor">
-                    <label class="form-check-label" for="frame-check">
-                        auto frame
-                    </label>
+                <div class="form-group">
+                    <label for="modify-select">allow to modify</label>
+                    <select class="form-control" id="modify-select" v-model="modifySelect">
+                        <option value="frame" selected>frame color</option>
+                        <option value="toolbar">toolbar color</option>
+                        <option value="both">both</option>
+                    </select>
                 </div>
+                <hr/>
+
                 <div class="form-group">
                     <label for="frame">frame</label>
                     <input type="color" class="form-control-file" id="frame"
-                           name="color" v-model="frameColor"/>
+                           name="color" v-model="frameColor"
+                           :disabled="modifySelect === 'toolbar'"/>
                 </div>
                 <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input"
-                           id="toolbar-check" v-model="autoToolbarColor">
-                    <label class="form-check-label" for="toolbar-check">
-                        auto toolbar
-                    </label>
+                    <label for="frameScale">frame auto lightness: {{ frameScale }}</label>
+                    <input type="range" min="-0.5" max="0.5" value="0.1" step="0.01"
+                           class="slider" id="frameScale" v-model="frameScale"
+                           :disabled="modifySelect !== 'toolbar'"
+                    >
                 </div>
+                <hr/>
+
                 <div class="form-group">
                     <label for="toolbar">toolbar</label>
                     <input type="color" class="form-control-file" id="toolbar"
-                           name="color" v-model="toolbarColor"/>
+                           name="color" v-model="toolbarColor"
+                           :disabled="modifySelect === 'frame'"/>
                 </div>
-                <button @click="saveManifest" class="btn btn-primary">Save</button>
+                <div class="form-group form-check">
+                    <label for="toolbarScale">toolbar auto lightness: {{ toolbarScale }}</label>
+                    <input type="range" min="-0.5" max="0.5" value="0.1" step="0.01"
+                           class="slider" id="toolbarScale" v-model="toolbarScale"
+                           :disabled="modifySelect !== 'frame'"
+                    >
+                </div>
+                <hr/>
+
+                <div class="form-group form-check">
+                    <label for="savePath">save path</label>
+                    <input type="text" class="form-control" id="savePath" v-model="savePath"
+                           placeholder="save/directory/path/for/manifest">
+                </div>
+                <button @click="saveManifest" class="btn btn-primary btn-lg btn-block">Save</button>
             </div>
+        </div>
+    </div>
+    <div style="margin-top: 15px">
+        <div v-for="msg in messages" class="message"
+             :class="{info: msg.type === 'info', error: msg.type === 'error' }">
+            {{ msg.text }}
         </div>
     </div>
 </div>
@@ -130,13 +169,18 @@
     const app = new Vue({
         el: '#app',
         data: {
-            message: 'Google',
+            savePath: '',
             frameColor: '#2e5daa',
             toolbarColor: '#4286f4',
+
             frameFontColor: '#fff',
             toolbarFontColor: '#fff',
-            autoFrameColor: false,
-            autoToolbarColor: true,
+
+            modifySelect: 'frame',
+
+            frameScale: -0.1,
+            toolbarScale: 0.1,
+
             tabs: [
                 {
                     id: 'google',
@@ -153,32 +197,37 @@
                     title: 'new tab',
                     active: false,
                 },
-            ]
+            ],
+
+            messages: [],
         },
         methods: {
             saveManifest: function () {
                 console.log('saving...');
                 ws.emit('save', {
+                    path: this.savePath,
                     toolbarColor: this.toolbarColor,
                     frameColor: this.frameColor,
                 })
             },
 
-            requestUpdateColors: function() {
+            requestUpdateColors: function () {
                 console.log('update color');
                 ws.emit('update', {
                     toolbarColor: this.toolbarColor,
                     frameColor: this.frameColor,
+                    toolbarScale: this.toolbarScale,
+                    frameScale: this.frameScale,
                 })
             },
 
-            updateColors: function(data) {
+            updateColors: function (data) {
                 this.frameFontColor = data.frameFontColor;
                 this.toolbarFontColor = data.toolbarFontColor;
-                if (this.autoToolbarColor) {
+                if (this.modifySelect === 'frame') {
                     this.toolbarColor = data.autoToolbarColor;
                 }
-                if (this.autoFrameColor) {
+                if (this.modifySelect === 'toolbar') {
                     this.frameColor = data.autoFrameColor;
                 }
             },
@@ -187,21 +236,42 @@
                 for (tab of this.tabs) {
                     tab.active = tab.id === tabId;
                 }
+            },
+
+            addMessage: function (text, type) {
+                this.messages.unshift({
+                    text: text,
+                    type: type,
+                });
+                if (this.messages.length > 3) {
+                    this.messages = this.messages.slice(0, 3);
+                }
             }
         },
         updated: function () {
             clearTimeout(delayTimer);
-            delayTimer = setTimeout(function() {
+            delayTimer = setTimeout(function () {
                 app.requestUpdateColors();
             }, 100);
         }
     });
     const ws = io.connect('http://' + document.domain + ':' + location.port);
+    ws.on('connect', function () {
+        app.requestUpdateColors();
+    });
 
     ws.on('update', function (e) {
         console.log('catch updated');
         console.log(e);
         app.updateColors(e);
+    });
+
+    ws.on('info', function (e) {
+        app.addMessage(e, 'info');
+    });
+
+    ws.on('error', function (e) {
+        app.addMessage(e, 'error');
     });
 </script>
 </body>

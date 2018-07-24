@@ -72,10 +72,12 @@ class Color:
     def add_alpha(self, alpha):
         return Color(self._value, alpha)
 
-    def add_light(self, m=1.1, a=0.1):
+    def add_light(self, m=1, a=0.1):
         h, s, l = self.hsl
-        l = max(min(l * m + a, 1), 0)
-        value = Color.hsl_to_rgb((h, s, l))
+        new_l = max(min(l * m + a, 1), 0)
+        print(l, new_l)
+        value = Color.hsl_to_rgb((h, s, new_l))
+        print(self._value, value)
         return Color(value, self._alpha)
 
     @classmethod
@@ -88,11 +90,11 @@ class Color:
         cmin_i, cmin = min(zip(range(3), (r, g, b)), key=lambda x: x[1])
         delta = cmax - cmin
         # hue
-        if delta == 0:
+        if abs(delta) < 0.001:
             h = 0
-        elif cmax == r:
+        elif cmax_i == 0:
             h = ((g - b) / delta % 6) * 60
-        elif cmax == g:
+        elif cmax_i == 1:
             h = ((b - r) / delta + 2) * 60
         else:
             h = ((r - g) / delta + 4) * 60
@@ -103,7 +105,7 @@ class Color:
             s = 0
         else:
             s = delta / (1 - abs(2 * l - 1))
-        return h, s, l
+        return min(h, 360), s, l
 
     @classmethod
     def hsl_to_rgb(cls, hsl):

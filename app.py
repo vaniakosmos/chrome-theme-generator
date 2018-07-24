@@ -38,16 +38,16 @@ def handle_new_connection():
 @socketio.on('update')
 def handle_update(event):
     frame_color = Color(event['frameColor'])
-    frame_scale = event.get('frameScale', -0.1)
+    frame_scale = event.get('frameScale', '-0.1')
     toolbar_color = Color(event['toolbarColor'])
-    toolbar_scale = event.get('toolbarScale', 0.1)
+    toolbar_scale = event.get('toolbarScale', '0.1')
     emit('update', {
         'frameColor': frame_color.hex,
         'toolbarColor': toolbar_color.hex,
         'frameFontColor': frame_color.alternative.hex,
         'toolbarFontColor': toolbar_color.alternative.hex,
-        'autoFrameColor': toolbar_color.add_light(1, frame_scale).hex,
-        'autoToolbarColor': frame_color.add_light(1, toolbar_scale).hex,
+        'autoFrameColor': toolbar_color.add_light(1, float(frame_scale)).hex,
+        'autoToolbarColor': frame_color.add_light(1, float(toolbar_scale)).hex,
     })
 
 
@@ -55,15 +55,18 @@ def handle_update(event):
 def save_manifest(event):
     frame_color = Color(event['frameColor'])
     toolbar_color = Color(event['toolbarColor'])
-    fp = event.get('path', './manifest.json')
+    fp = event.get('path', None)
+    fp = fp or '.'
     try:
         m = Manifest()
         m.setup(frame_color, toolbar_color)
-        m.save(fp)
+        fp = m.save(fp)
+        emit('info', f"Save file to {fp}")
     except Exception as e:
+        print(e)
         emit('error', str(e))
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=30)
-    socketio.run(app, host='0.0.0.0', port=8000, debug=False)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
