@@ -1,6 +1,9 @@
+import colorsys
+
+
 def get_hex(num):
     h = hex(num)[2:]
-    return h if len(h) == 2 else h * 2
+    return h if len(h) == 2 else '0' + h
 
 
 def bound_color(num):
@@ -18,13 +21,9 @@ class Color:
         self._value = list(map(int, self._value))
         self._alpha = alpha
 
-        try:
-            assert len(self._value) == 3
-            assert all(map(lambda e: 0 <= e <= 255, self._value))
-            assert 0 <= self._alpha <= 1
-        except AssertionError as e:
-            print(self._value, value, alpha)
-            raise e
+        assert len(self._value) == 3
+        assert all(map(lambda e: 0 <= e <= 255, self._value))
+        assert 0 <= self._alpha <= 1
 
     def __add__(self, alpha: float):
         assert isinstance(alpha, float)
@@ -47,7 +46,7 @@ class Color:
 
     @property
     def hsl(self):
-        return Color.rgb_to_hsl(self._value)
+        return colorsys.rgb_to_hls(*map(lambda c: c / 255, self._value))
 
     @property
     def alpha(self):
@@ -75,60 +74,9 @@ class Color:
     def add_light(self, m=1, a=0.1):
         h, s, l = self.hsl
         new_l = max(min(l * m + a, 1), 0)
-        print(l, new_l)
-        value = Color.hsl_to_rgb((h, s, new_l))
-        print(self._value, value)
+        value = colorsys.hsv_to_rgb(h, s, new_l)
+        value = list(map(lambda c: int(c * 255), value))
         return Color(value, self._alpha)
-
-    @classmethod
-    def rgb_to_hsl(cls, rgb):
-        r, g, b = rgb
-        r /= 255
-        g /= 255
-        b /= 255
-        cmax_i, cmax = max(zip(range(3), (r, g, b)), key=lambda x: x[1])
-        cmin_i, cmin = min(zip(range(3), (r, g, b)), key=lambda x: x[1])
-        delta = cmax - cmin
-        # hue
-        if abs(delta) < 0.001:
-            h = 0
-        elif cmax_i == 0:
-            h = ((g - b) / delta % 6) * 60
-        elif cmax_i == 1:
-            h = ((b - r) / delta + 2) * 60
-        else:
-            h = ((r - g) / delta + 4) * 60
-        # luminance
-        l = (cmax + cmin) / 2
-        # saturation
-        if delta == 0:
-            s = 0
-        else:
-            s = delta / (1 - abs(2 * l - 1))
-        return min(h, 360), s, l
-
-    @classmethod
-    def hsl_to_rgb(cls, hsl):
-        h, s, l = hsl
-        c = (1 - abs(2 * l - 1)) * s
-        x = c * (1 - abs((h / 60) % 2 - 1))
-        m = l - c / 2
-
-        if 0 <= h < 60:
-            r, g, b = c, x, 0
-        elif 60 <= h < 120:
-            r, g, b = x, c, 0
-        elif 120 <= h < 180:
-            r, g, b = 0, c, x
-        elif 180 <= h < 240:
-            r, g, b = 0, x, c
-        elif 240 <= h < 300:
-            r, g, b = x, 0, c
-        else:
-            r, g, b = c, 0, x
-
-        r, g, b = bound_color((r + m) * 255), bound_color((g + m) * 255), bound_color((b + m) * 255)
-        return r, g, b
 
     @classmethod
     def rgb_to_hex(cls, color: iter):
@@ -147,16 +95,3 @@ class Color:
         else:
             raise ValueError(f"bad hex color {value}")
         return value
-
-
-def main():
-    rgb = (43, 56, 89)
-    print(rgb)
-    hsl = Color.rgb_to_hsl(rgb)
-    print(hsl)
-    rgb = Color.hsl_to_rgb(hsl)
-    print(rgb)
-
-
-if __name__ == '__main__':
-    main()
