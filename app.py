@@ -61,10 +61,16 @@ def save_manifest(event):
         m = Manifest()
         m.setup(frame_color, toolbar_color)
         fp = m.save(fp)
-        emit('info', f"Save file to {fp}")
+        emit('message', {
+            'text': f"Save file to {fp}",
+            'type': 'info',
+        })
     except Exception as e:
         print(e)
-        emit('error', str(e))
+        emit('message', {
+            'text': str(e),
+            'type': 'error',
+        })
 
 
 if __name__ == '__main__':

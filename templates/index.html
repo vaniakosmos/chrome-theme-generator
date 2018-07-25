@@ -238,10 +238,10 @@
                 }
             },
 
-            addMessage: function (text, type) {
+            addMessage: function (e) {
                 this.messages.unshift({
-                    text: text,
-                    type: type,
+                    text: e.text,
+                    type: e.type,
                 });
                 if (this.messages.length > 3) {
                     this.messages = this.messages.slice(0, 3);
@@ -266,12 +266,8 @@
         app.updateColors(e);
     });
 
-    ws.on('info', function (e) {
-        app.addMessage(e, 'info');
-    });
-
-    ws.on('error', function (e) {
-        app.addMessage(e, 'error');
+    ws.on('message', function (e) {
+        app.addMessage(e);
     });
 </script>
 </body>
