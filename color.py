@@ -73,8 +73,8 @@ class Color:
 
     def add_light(self, m=1, a=0.1):
         h, s, l = self.hsl
-        new_l = max(min(l * m + a, 1), 0)
-        value = colorsys.hsv_to_rgb(h, s, new_l)
+        s = max(min(s * m + a, 1), 0)
+        value = colorsys.hls_to_rgb(h, s, l)
         value = list(map(lambda c: int(c * 255), value))
         return Color(value, self._alpha)
 
